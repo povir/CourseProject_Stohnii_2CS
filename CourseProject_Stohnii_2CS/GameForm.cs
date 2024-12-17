@@ -43,7 +43,6 @@ namespace CourseProject_Stohnii_2CS
 
         private void InitializeControls()
         {
-            // Переключатель режимів
             Button btnToggleMode = new Button
             {
                 Text = "Режим: Людина",
@@ -54,11 +53,10 @@ namespace CourseProject_Stohnii_2CS
             btnToggleMode.Click += (sender, e) =>
             {
                 isAiMode = !isAiMode;
-                btnToggleMode.Text = isAiMode ? "Режим: ИИ" : "Режим: Людина";
+                btnToggleMode.Text = isAiMode ? "Режим: ШІ" : "Режим: Людина";
             };
             Controls.Add(btnToggleMode);
 
-            // Кнопка - исторія
             Button btnHistory = new Button
             {
                 Text = "Історія ігор",
@@ -75,7 +73,6 @@ namespace CourseProject_Stohnii_2CS
             };
             Controls.Add(btnHistory);
 
-            // Кнопка зміни профіля
             Button btnChangeProfile = new Button
             {
                 Text = "Змінити профіль",
@@ -99,7 +96,6 @@ namespace CourseProject_Stohnii_2CS
             };
             Controls.Add(btnChangeProfile);
 
-            // Кнопка Exit
             Button btnExit = new Button
             {
                 Text = "Вийти",
@@ -129,7 +125,7 @@ namespace CourseProject_Stohnii_2CS
 
             if (board.Cast<Button>().All(b => !string.IsNullOrEmpty(b.Text)))
             {
-                HandleGameEnd("Нічія");
+                HandleGameEnd("Draw");
                 return;
             }
 
@@ -147,7 +143,7 @@ namespace CourseProject_Stohnii_2CS
 
                 if (board.Cast<Button>().All(b => !string.IsNullOrEmpty(b.Text)))
                 {
-                    HandleGameEnd("Нічія");
+                    HandleGameEnd("Draw");
                     return;
                 }
 
@@ -157,6 +153,15 @@ namespace CourseProject_Stohnii_2CS
 
         private void MakeAiMove()
         {
+            (int row, int col) bestMove = GetBestMove();
+            board[bestMove.row, bestMove.col].Text = "O";
+        }
+
+        private (int, int) GetBestMove()
+        {
+            int bestScore = int.MinValue;
+            (int, int) bestMove = (-1, -1);
+
             for (int i = 0; i < 3; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -164,9 +169,61 @@ namespace CourseProject_Stohnii_2CS
                     if (string.IsNullOrEmpty(board[i, j].Text))
                     {
                         board[i, j].Text = "O";
-                        return;
+                        int score = Minimax(board, 0, false);
+                        board[i, j].Text = string.Empty;
+
+                        if (score > bestScore)
+                        {
+                            bestScore = score;
+                            bestMove = (i, j);
+                        }
                     }
                 }
+            }
+
+            return bestMove;
+        }
+
+        private int Minimax(Button[,] board, int depth, bool isMaximizing)
+        {
+            if (CheckWin()) return isMaximizing ? -1 : 1;
+            if (board.Cast<Button>().All(b => !string.IsNullOrEmpty(b.Text))) return 0;
+
+            if (isMaximizing)
+            {
+                int bestScore = int.MinValue;
+                for (int i = 0; i < 3; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        if (string.IsNullOrEmpty(board[i, j].Text))
+                        {
+                            board[i, j].Text = "O";
+                            int score = Minimax(board, depth + 1, false);
+                            board[i, j].Text = string.Empty;
+                            bestScore = Math.Max(score, bestScore);
+                        }
+                    }
+                }
+                return bestScore;
+            }
+            else
+            {
+                int bestScore = int.MaxValue;
+                for (int i = 0; i < 3; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        if (string.IsNullOrEmpty(board[i, j].Text))
+                        {
+                            board[i, j].Text = "X";
+                            int score = Minimax(board, depth + 1, true);
+                            board[i, j].Text = string.Empty;
+                            bestScore = Math.Min(score, bestScore);
+                        }
+                    }
+                }
+                return bestScore;
             }
         }
 
@@ -192,7 +249,7 @@ namespace CourseProject_Stohnii_2CS
 
         private void HandleGameEnd(string result)
         {
-            string message = result == "Draw" ? "It's a draw!" : $"Player {result} wins!";
+            string message = result == "Draw" ? "Нічия: немає переможця" : $"Player {result} wins!";
             MessageBox.Show(message);
 
             currentProfile.GameHistory.Add(new GameRecord
