@@ -43,7 +43,7 @@ namespace CourseProject_Stohnii_2CS
 
         private void InitializeControls()
         {
-            // Переключатель режимов
+            // Переключатель режимів
             Button btnToggleMode = new Button
             {
                 Text = "Режим: Людина",
@@ -58,7 +58,7 @@ namespace CourseProject_Stohnii_2CS
             };
             Controls.Add(btnToggleMode);
 
-            // Кнопка истории
+            // Кнопка - исторія
             Button btnHistory = new Button
             {
                 Text = "Історія ігор",
@@ -75,7 +75,7 @@ namespace CourseProject_Stohnii_2CS
             };
             Controls.Add(btnHistory);
 
-            // Кнопка смены профиля
+            // Кнопка зміни профіля
             Button btnChangeProfile = new Button
             {
                 Text = "Змінити профіль",
@@ -99,7 +99,7 @@ namespace CourseProject_Stohnii_2CS
             };
             Controls.Add(btnChangeProfile);
 
-            // Кнопка выхода
+            // Кнопка Exit
             Button btnExit = new Button
             {
                 Text = "Вийти",
