@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Xml;
 using Newtonsoft.Json;
 
 namespace CourseProject_Stohnii_2CS.Models
@@ -20,7 +19,7 @@ namespace CourseProject_Stohnii_2CS.Models
 
         public static void SaveProfiles(List<Profile> profiles)
         {
-            string json = JsonConvert.SerializeObject(profiles, Newtonsoft.Json.Formatting.Indented);
+            string json = JsonConvert.SerializeObject(profiles, Formatting.Indented);
             Directory.CreateDirectory("Data");
             File.WriteAllText(FilePath, json);
         }

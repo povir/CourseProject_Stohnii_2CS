@@ -11,6 +11,7 @@ namespace CourseProject_Stohnii_2CS
         private Profile currentProfile;
         private Button[,] board = new Button[3, 3];
         private bool isPlayerXTurn = true;
+        private bool isAiMode = false;
 
         public GameForm(Profile profile)
         {
@@ -32,7 +33,7 @@ namespace CourseProject_Stohnii_2CS
                         Font = new Font("Arial", 24),
                         Width = 100,
                         Height = 100,
-                        Location = new Point(j * 100 + 150, i * 100 + 50) 
+                        Location = new Point(j * 100 + 150, i * 100 + 50)
                     };
                     board[i, j].Click += OnCellClick;
                     Controls.Add(board[i, j]);
@@ -42,7 +43,22 @@ namespace CourseProject_Stohnii_2CS
 
         private void InitializeControls()
         {
-            
+            // Переключатель режимов
+            Button btnToggleMode = new Button
+            {
+                Text = "Режим: Людина",
+                Location = new Point(300, 350),
+                Width = 150,
+                Height = 30
+            };
+            btnToggleMode.Click += (sender, e) =>
+            {
+                isAiMode = !isAiMode;
+                btnToggleMode.Text = isAiMode ? "Режим: ИИ" : "Режим: Людина";
+            };
+            Controls.Add(btnToggleMode);
+
+            // Кнопка истории
             Button btnHistory = new Button
             {
                 Text = "Історія ігор",
@@ -59,7 +75,7 @@ namespace CourseProject_Stohnii_2CS
             };
             Controls.Add(btnHistory);
 
-            
+            // Кнопка смены профиля
             Button btnChangeProfile = new Button
             {
                 Text = "Змінити профіль",
@@ -69,23 +85,21 @@ namespace CourseProject_Stohnii_2CS
             };
             btnChangeProfile.Click += (sender, e) =>
             {
-                Hide(); 
+                Hide();
                 using (LoginForm loginForm = new LoginForm())
                 {
                     if (loginForm.ShowDialog() == DialogResult.OK)
                     {
-                        
                         Profile selectedProfile = loginForm.SelectedProfile;
                         GameForm newGameForm = new GameForm(selectedProfile);
                         newGameForm.ShowDialog();
                     }
                 }
-                Close(); 
+                Close();
             };
             Controls.Add(btnChangeProfile);
 
-
-            
+            // Кнопка выхода
             Button btnExit = new Button
             {
                 Text = "Вийти",
@@ -95,7 +109,7 @@ namespace CourseProject_Stohnii_2CS
             };
             btnExit.Click += (sender, e) =>
             {
-                Application.Exit(); 
+                Application.Exit();
             };
             Controls.Add(btnExit);
         }
@@ -106,37 +120,54 @@ namespace CourseProject_Stohnii_2CS
             if (!string.IsNullOrEmpty(button.Text)) return;
 
             button.Text = isPlayerXTurn ? "X" : "O";
+
             if (CheckWin())
             {
-                string winner = isPlayerXTurn ? "X" : "O";
-                MessageBox.Show($"Player {winner} wins!");
-
-                currentProfile.GameHistory.Add(new GameRecord
-                {
-                    Opponent = "AI",
-                    Result = $"{winner} wins",
-                    Date = DateTime.Now.ToString("G")
-                });
-
-                DataStorage.SaveProfiles(DataStorage.LoadProfiles());
-                ResetBoard();
+                HandleGameEnd(isPlayerXTurn ? "X" : "O");
+                return;
             }
-            else if (board.Cast<Button>().All(b => !string.IsNullOrEmpty(b.Text)))
+
+            if (board.Cast<Button>().All(b => !string.IsNullOrEmpty(b.Text)))
             {
-                MessageBox.Show("It's a draw!");
-
-                currentProfile.GameHistory.Add(new GameRecord
-                {
-                    Opponent = "AI",
-                    Result = "Draw",
-                    Date = DateTime.Now.ToString("G")
-                });
-
-                DataStorage.SaveProfiles(DataStorage.LoadProfiles());
-                ResetBoard();
+                HandleGameEnd("Нічія");
+                return;
             }
 
             isPlayerXTurn = !isPlayerXTurn;
+
+            if (isAiMode && !isPlayerXTurn)
+            {
+                MakeAiMove();
+
+                if (CheckWin())
+                {
+                    HandleGameEnd("O");
+                    return;
+                }
+
+                if (board.Cast<Button>().All(b => !string.IsNullOrEmpty(b.Text)))
+                {
+                    HandleGameEnd("Нічія");
+                    return;
+                }
+
+                isPlayerXTurn = true;
+            }
+        }
+
+        private void MakeAiMove()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if (string.IsNullOrEmpty(board[i, j].Text))
+                    {
+                        board[i, j].Text = "O";
+                        return;
+                    }
+                }
+            }
         }
 
         private bool CheckWin()
@@ -157,6 +188,34 @@ namespace CourseProject_Stohnii_2CS
                 return true;
 
             return false;
+        }
+
+        private void HandleGameEnd(string result)
+        {
+            string message = result == "Draw" ? "It's a draw!" : $"Player {result} wins!";
+            MessageBox.Show(message);
+
+            currentProfile.GameHistory.Add(new GameRecord
+            {
+                Opponent = isAiMode ? "AI" : "Human",
+                Result = result == "Draw" ? "Draw" : $"{result} wins",
+                Date = DateTime.Now.ToString("G"),
+                AgainstAI = isAiMode
+            });
+
+            var profiles = DataStorage.LoadProfiles();
+            var profile = profiles.FirstOrDefault(p => p.Name == currentProfile.Name);
+            if (profile != null)
+            {
+                profile.GameHistory = currentProfile.GameHistory;
+            }
+            else
+            {
+                profiles.Add(currentProfile);
+            }
+            DataStorage.SaveProfiles(profiles);
+
+            ResetBoard();
         }
 
         private void ResetBoard()
